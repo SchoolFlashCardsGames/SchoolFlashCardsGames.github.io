@@ -60,7 +60,6 @@ table{width:100%;border-collapse:collapse}td{padding:8px;border-top:1px solid #d
 .star{cursor:pointer;font-size:20px;background:none;border:none}
 footer{background:var(--dark);color:#fff;padding:25px 0;text-align:center;font-size:14px}
 footer .c{color:#aaa}
-html:not([data-theme=dark]) footer .c a{color:red}
 html[data-theme=dark]{color-scheme:dark}
 html[data-theme=dark] body{background:#14181d;color:#e8ecef}
 html[data-theme=dark] header,html[data-theme=dark] .hero{background:#000}
@@ -84,11 +83,14 @@ html[data-theme=dark] .opt.ok{background:#2e9e4f}html[data-theme=dark] .opt.no{b
 .tdots{margin-top:12px;color:#999;font-size:13px}
 html[data-theme=dark] .tbox{background:#1f252c;color:#e8ecef}
 html[data-theme=dark] .tnav .btn.prev{background:#3a3f47;color:#ddd}
+.opt b{display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;background:var(--secondary);color:#fff;margin-right:10px}
+.opt:hover b,.opt.ok b,.opt.no b{background:#fff;color:var(--dark)}
+html:not([data-theme=dark]) footer a{color:#ff4d4d}
 </style>
 </head>
 <body>
 <header><div class="container"><div class="header-content">
-<a href="#" class="logo">School<span>Flash</span>Cards</a>
+<a href="#" class="logo" onclick="event.preventDefault();home()">School<span>Flash</span>Cards</a>
 <div class="hbtns"><button class="nb" onclick="home()">My Sets</button><button class="nb" id="themeBtn" title="Dark mode">🌙</button></div>
 </div></div></header>
 <section class="hero"><div class="container"><h1>Flashcards</h1><p>Import your Quizlet sets and study them for free. Everything stays saved in your browser.</p></div></section>
@@ -192,16 +194,16 @@ document.addEventListener('keydown',e=>{if(mode!=='fc'||/INPUT|TEXTAREA|SELECT/.
 // ---------- learn / write ----------
 function startRun(m){
   const cards=pool().filter(c=>!starOnly||c.s);
-  mode=m;run={q:shuf(cards.length?cards:pool()),done:0,total:(cards.length?cards:pool()).length,miss:0};nextQ();
+  mode=m;run={q:shuf(cards.length?cards:pool()),n:0,done:0,total:(cards.length?cards:pool()).length,miss:0};nextQ();
 }
 function nextQ(){
   if(!run.q.length){app.innerHTML=`<div class="card center"><h2>🎉 All done!</h2><p style="margin:10px">You got through ${run.total} cards with ${run.miss} miss${run.miss===1?'':'es'}.</p><button class="btn" onclick="startRun('${mode}')">Go again</button>${back}</div>`;return}
-  const c=run.q[0];run.c=c;
-  const head=`<div class="center">${back}</div><div class="bar"><div style="width:${run.done/run.total*100}%"></div></div><div class="card"><div class="q">${esc(side(c,false))}</div>`;
+  const c=run.q[0];run.c=c;run.n++;
+  const head=`<div class="center">${back}</div><div class="bar"><div style="width:${run.done/run.total*100}%"></div></div><div class="card"><p class="muted">Question ${run.n}</p><div class="q">${esc(side(c,false))}</div>`;
   if(mode==='learn'){
     const wrong=shuf(pool().filter(x=>x!==c&&side(x,true)!==side(c,true))).slice(0,3);
     const opts=shuf([c,...wrong]);
-    app.innerHTML=head+opts.map((o,n)=>`<button class="opt" data-n="${n}">${esc(side(o,true))}</button>`).join('')+`<div id="fb"></div></div>`;
+    app.innerHTML=head+opts.map((o,n)=>`<button class="opt" data-n="${n}"><b>${n+1}</b>${esc(side(o,true))}</button>`).join('')+`<div id="fb"></div></div>`;
     document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
       const ok=opts[+b.dataset.n]===c;document.querySelectorAll('.opt').forEach((x,n)=>{x.disabled=true;if(opts[n]===c)x.classList.add('ok')});
       if(!ok)b.classList.add('no');answered(ok)});
@@ -306,6 +308,7 @@ function tutR(){
   $('#tut .tbox').scrollTop=0;
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){tutX();dlgX()}});
+document.addEventListener('keydown',e=>{if(mode!=='learn'||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const b=document.querySelector('.opt[data-n="'+(+e.key-1)+'"]');if(b&&!b.disabled)b.click()});
 home();
 </script>
 </body>
