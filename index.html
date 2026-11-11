@@ -70,7 +70,7 @@ html[data-theme=dark] .opt.ok{background:#2e9e4f}html[data-theme=dark] .opt.no{b
 </head>
 <body>
 <header><div class="container"><div class="header-content">
-<a href="games" class="logo">School<span>Flash</span>Cards</a>
+<a href="#" class="logo">School<span>Flash</span>Cards</a>
 <div class="hbtns"><button class="nb" onclick="home()">My Sets</button><button class="nb" id="themeBtn" title="Dark mode">🌙</button></div>
 </div></div></header>
 <section class="hero"><div class="container"><h1>Flashcards</h1><p>Import your Quizlet sets and study them for free. Everything stays saved in your browser.</p></div></section>
@@ -105,7 +105,7 @@ function home(){
   stop();mode='';cur=null;
   app.innerHTML=`<h2 class="section-title">Import from Quizlet</h2>
   <div class="card">
-   <p class="muted">On Quizlet: open a set → ⋯ → <b>Export</b> → copy text → paste below. (Quizlet blocks sites from grabbing sets directly, so copy/paste is the way.) Leave the separators as they are if you used Quizlet's defaults.</p>
+   <p class="muted">On Quizlet: open a set → ⋯ → <b>Export</b> → copy text → paste below. (You may have to copy the set) (Quizlet blocks sites from grabbing sets directly, so copy/paste is the way.) Leave the separators as they are if you used Quizlet's defaults.</p>
    <label>Quizlet link (optional)</label><div class="row"><div style="flex:3"><input type="text" id="lk" placeholder="https://quizlet.com/..."/></div><div><button class="btn alt" id="lg">Get cards from link</button></div></div><p class="muted" id="ls"></p>
    <label>Set name</label><input type="text" id="nm" placeholder="e.g. Chapter 5 Vocab"/>
    <label>Pasted cards</label><textarea id="txt" placeholder="term&#9;definition&#10;term&#9;definition"></textarea>
