@@ -41,8 +41,11 @@ textarea{min-height:180px;resize:vertical}
 label{font-weight:bold;font-size:14px;display:block;margin:10px 0 4px}
 .row{display:flex;gap:12px;flex-wrap:wrap}.row>div{flex:1;min-width:150px}
 .center{text-align:center}
-.fc{background:#fff;border-radius:14px;box-shadow:0 5px 18px rgba(0,0,0,.18);min-height:280px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-size:28px;cursor:pointer;user-select:none;border-top:8px solid var(--secondary);overflow-wrap:anywhere;white-space:pre-wrap}
-.fc.back{border-top-color:var(--button)}
+.fcw{perspective:1200px;cursor:pointer;height:300px}
+.fci{position:relative;height:100%;transition:transform .55s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}
+.fci.flipped{transform:rotateY(180deg)}
+.fcf{position:absolute;inset:0;background:#fff;border-radius:14px;box-shadow:0 5px 18px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-size:28px;user-select:none;border-top:8px solid var(--secondary);overflow:auto;overflow-wrap:anywhere;white-space:pre-wrap;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.fcb{transform:rotateY(180deg);border-top-color:var(--button)}
 .bar{height:12px;background:#ddd;border-radius:10px;overflow:hidden;margin:12px 0}
 .bar div{height:100%;background:var(--button);transition:width .3s}
 .opt{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--secondary);border-radius:10px;padding:12px 16px;margin:8px 0;font-size:16px;cursor:pointer;color:var(--dark)}
@@ -60,15 +63,15 @@ footer .c{color:#aaa}
 html[data-theme=dark]{color-scheme:dark}
 html[data-theme=dark] body{background:#14181d;color:#e8ecef}
 html[data-theme=dark] header,html[data-theme=dark] .hero{background:#000}
-html[data-theme=dark] .card,html[data-theme=dark] .fc,html[data-theme=dark] .opt,html[data-theme=dark] .tile,html[data-theme=dark] .cat{background:#1f252c;color:#e8ecef}
+html[data-theme=dark] .card,html[data-theme=dark] .fcf,html[data-theme=dark] .opt,html[data-theme=dark] .tile,html[data-theme=dark] .cat{background:#1f252c;color:#e8ecef}
 html[data-theme=dark] input,html[data-theme=dark] textarea,html[data-theme=dark] select{background:#3a3f47;color:#e8ecef}
 html[data-theme=dark] .muted{color:#9aa4ad}
 html[data-theme=dark] .nb{background:#3a3f47}
 html[data-theme=dark] .tile.sel{background:#6b5d12}html[data-theme=dark] td{border-color:#2e3640}
 html[data-theme=dark] .opt.ok{background:#2e9e4f}html[data-theme=dark] .opt.no{background:#d33}
 
-#tut{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:99;padding:15px}
-#tut.on{display:flex}
+#tut,#dlg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:99;padding:15px}
+#tut.on,#dlg.on{display:flex}
 .tbox{background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:90vh;overflow:auto;padding:26px 24px 22px;position:relative;text-align:center;color:var(--dark)}
 .tbox h2{font-size:28px;margin:4px 0 10px}.tbox p{font-size:15px;line-height:1.45;margin:12px 0}
 .tx{position:absolute;top:8px;right:14px;background:none;border:none;font-size:24px;cursor:pointer;color:#888}
@@ -89,6 +92,7 @@ html[data-theme=dark] .tnav .btn.prev{background:#3a3f47;color:#ddd}
 </div></div></header>
 <section class="hero"><div class="container"><h1>Flashcards</h1><p>Import your Quizlet sets and study them for free. Everything stays saved in your browser.</p></div></section>
 <main><div class="container" id="app"></div></main>
+<div id="dlg" onclick="if(event.target===this)dlgX()"><div class="tbox" style="max-width:420px"></div></div>
 <div id="tut" onclick="if(event.target===this)tutX()"><div class="tbox"></div></div>
 <footer><div class="container"><p class="c">© 2026 SchoolFlashCards5. Not affiliated with Quizlet. <a href="https://games.schoolflashcards.com">Games</a></p></div></footer>
 
@@ -140,12 +144,18 @@ function openSet(id){cur=id;setPage()}
 function setPage(){
   stop();mode='';const s=getSet();if(!s)return home();
   app.innerHTML=`<div class="center"><h2 class="section-title">${esc(s.name)}</h2><p class="muted">${s.cards.length} cards · ${s.cards.filter(c=>c.s).length} starred</p>
-  <div style="margin:15px 0"><button class="btn" onclick="startFC()">Flashcards</button><button class="btn" onclick="startRun('learn')">Learn</button><button class="btn" onclick="startRun('write')">Write</button><button class="btn" onclick="testSetup()">Test</button><button class="btn" onclick="startMatch()">Match</button></div>
+  <div style="margin:15px 0"><button class="btn" onclick="startFC()">Flashcards</button><button class="btn" onclick="startRun('learn')">Learn</button><button class="btn" onclick="startRun('write')">Write</button><button class="btn" onclick="testSetup()">Test</button><button class="btn" onclick="matchIntro()">Match</button></div>
   <div><button class="btn alt" onclick="editSet()">Edit</button><button class="btn alt" onclick="exportSet()">Export</button><button class="btn dk" onclick="delSet()">Delete</button></div></div><br/>
   <div class="card"><table>${s.cards.map((c,n)=>`<tr><td style="width:40px"><button class="star" onclick="star(${n})">${c.s?'⭐':'☆'}</button></td><td><b>${esc(c.t)}</b></td><td>${esc(c.d)}</td></tr>`).join('')}</table></div>`;
 }
 function star(n){const c=getSet().cards[n];c.s=!c.s;save();setPage()}
-function delSet(){if(confirm('Delete this set for good?')){sets=sets.filter(s=>s.id!==cur);save();home()}}
+function delSet(){const s=getSet();ask('Delete this set?',`“${esc(s.name)}” and its ${s.cards.length} cards will be gone for good.`,'Delete',()=>{sets=sets.filter(x=>x.id!==cur);save();home()})}
+function ask(h,msg,ok,cb){
+  $('#dlg').classList.add('on');
+  $('#dlg .tbox').innerHTML=`<h2>${h}</h2><p>${msg}</p><div class="tnav"><button class="btn prev" id="dn">Cancel</button><button class="btn" id="dy">${ok}</button></div>`;
+  $('#dn').onclick=dlgX;$('#dy').onclick=()=>{dlgX();cb()};$('#dn').focus();
+}
+function dlgX(){$('#dlg').classList.remove('on')}
 function editSet(){const s=getSet();app.innerHTML=`<h2 class="section-title">Edit set</h2><div class="card"><label>Name</label><input type="text" id="en" value="${esc(s.name)}"/><label>Cards (term, TAB, definition — one per line)</label><textarea id="et" style="min-height:300px">${esc(s.cards.map(c=>c.t+'\t'+c.d).join('\n'))}</textarea><button class="btn" id="es">Save</button><button class="btn dk" onclick="setPage()">Cancel</button></div>`;
   $('#es').onclick=()=>{const old=Object.fromEntries(s.cards.map(c=>[c.t+'\u0000'+c.d,c.s])),n=parse($('#et').value,{v:'tab'},{v:'nl'});n.forEach(c=>c.s=!!old[c.t+'\u0000'+c.d]);if(!n.length)return alert('Need at least one card.');s.name=$('#en').value.trim()||s.name;s.cards=n;save();setPage()}}
 function exportSet(){const s=getSet(),t=s.cards.map(c=>c.t+'\t'+c.d).join('\n');app.innerHTML=`<h2 class="section-title">Export</h2><div class="card"><p class="muted">Copy this to back up or share the set (tab between term and definition).</p><textarea id="ex" readonly>${esc(t)}</textarea><button class="btn" onclick="$('#ex').select();document.execCommand('copy')">Copy</button><button class="btn dk" onclick="setPage()">Back</button></div>`}
@@ -159,13 +169,22 @@ function buildDeck(){const a=pool().filter(c=>!starOnly||c.s);deck=a.length?a:po
 function fc(){
   const c=deck[i];
   app.innerHTML=`<div class="center">${back}<p class="muted" style="margin:10px">${i+1} / ${deck.length}</p></div>
-  <div class="fc ${flipped?'back':''}" onclick="flip()">${esc(side(c,flipped))}</div>
+  <div class="fcw" onclick="flip()"><div class="fci ${flipped?'flipped':''}"><div class="fcf">${esc(side(c,false))}</div><div class="fcf fcb">${esc(side(c,true))}</div></div></div>
   <div class="center" style="margin-top:15px"><button class="btn" onclick="nav(-1)">◀</button><button class="btn alt" onclick="flip()">Flip</button><button class="btn" onclick="nav(1)">▶</button></div>
   <div class="center" style="margin-top:10px"><button class="cat" onclick="starCur()">${c.s?'⭐ Starred':'☆ Star'}</button><button class="cat" onclick="deck=shuf(deck);i=0;flipped=false;fc()">🔀 Shuffle</button><button class="cat ${defFirst?'on':''}" onclick="defFirst=!defFirst;flipped=false;fc()">Definition first</button><button class="cat ${starOnly?'on':''}" onclick="starOnly=!starOnly;i=0;flipped=false;buildDeck();fc()">Starred only</button></div>
   <p class="muted center" style="margin-top:10px">Keys: Space = flip, ← → = move</p>`;
 }
-function flip(){flipped=!flipped;fc()}
-function nav(d){i=(i+d+deck.length)%deck.length;flipped=false;fc()}
+function flip(){flipped=!flipped;const e=$('.fci');if(e)e.classList.toggle('flipped',flipped)}
+let navBusy=false;
+function nav(d){
+  if(navBusy)return;navBusy=true;
+  const w=$('.fcw');w.style.transition='transform .18s ease-in,opacity .18s';w.style.transform=`translateX(${-d*70}px)`;w.style.opacity=0;
+  setTimeout(()=>{
+    i=(i+d+deck.length)%deck.length;flipped=false;fc();
+    const n=$('.fcw');n.style.transform=`translateX(${d*70}px)`;n.style.opacity=0;n.offsetWidth;
+    n.style.transition='transform .2s ease-out,opacity .2s';n.style.transform='';n.style.opacity=1;navBusy=false;
+  },180);
+}
 function starCur(){deck[i].s=!deck[i].s;save();fc()}
 document.addEventListener('keydown',e=>{if(mode!=='fc'||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(e.key===' '){e.preventDefault();flip()}else if(e.key==='ArrowRight')nav(1);else if(e.key==='ArrowLeft')nav(-1)});
 
@@ -221,7 +240,7 @@ function testSetup(){
   };
 }
 function renderTest(){
-  app.innerHTML=`<div class="center">${back}</div><br/>`+run.qs.map((q,n)=>{
+  app.innerHTML=`<div class="center">${back}</div><div id="sc"></div><br/>`+run.qs.map((q,n)=>{
     const c=q.card;let b=`<div class="card"><p class="muted">Question ${n+1}</p><div class="q">${esc(side(c,false))}</div>`;
     if(q.t==='mc')b+=q.opts.map((o,k)=>`<label style="font-weight:normal;margin:6px 0"><input type="radio" name="q${n}" value="${k}"/> ${esc(side(o,true))}</label>`).join('');
     if(q.t==='tf')b+=`<p>Is this the right match?<br/><b>${esc(side(q.shown,true))}</b></p><label style="display:inline;margin-right:14px"><input type="radio" name="q${n}" value="1"/> True</label><label style="display:inline"><input type="radio" name="q${n}" value="0"/> False</label>`;
@@ -239,11 +258,14 @@ function gradeTest(){
     if(ok)score++;
     $('#r'+n).innerHTML=ok?`<p class="good">✔ Correct</p>`:`<p class="bad">✘ You said: ${esc(mine||'(blank)')}</p><p class="good">Correct: ${q.t==='tf'?(q.shown===c?'True':'False — it was '+esc(side(c,true))):esc(side(c,true))}</p>`;
   });
-  $('#sub').outerHTML=`<h2 class="center">Score: ${score} / ${run.qs.length} (${Math.round(score/run.qs.length*100)}%)</h2><div class="center"><button class="btn" onclick="testSetup()">New test</button></div>`;
+  $('#sub').remove();$('#sc').innerHTML=`<h2 class="center" style="margin:14px 0 4px">Score: ${score} / ${run.qs.length} (${Math.round(score/run.qs.length*100)}%)</h2><div class="center"><button class="btn" onclick="testSetup()">New test</button></div>`;
   scrollTo({top:0,behavior:'smooth'});
 }
 
 // ---------- match ----------
+function matchIntro(){
+  stop();app.innerHTML=`<div class="card center" style="max-width:520px;margin:30px auto"><h2 style="font-size:32px;margin-bottom:14px">Ready to play?</h2><p style="font-size:17px;line-height:1.5">Match all the terms with their definitions as fast as you can. Avoid wrong matches, they add extra time!</p><br/><button class="btn" style="font-size:20px;padding:14px 50px;border-radius:30px" onclick="startMatch()">Start game</button><br/>${back}</div>`;
+}
 function startMatch(){
   stop();const c=shuf(pool()).slice(0,6);
   let tiles=shuf(c.flatMap((x,n)=>[{k:n,v:x.t},{k:n,v:x.d}])),sel=null,left=c.length,t0=Date.now(),busy=false;
@@ -282,7 +304,7 @@ function tutR(){
   <div class="tdots">Step ${ts+1} of ${TUT.length}</div>`;
   $('#tut .tbox').scrollTop=0;
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape')tutX()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){tutX();dlgX()}});
 home();
 </script>
 </body>
